@@ -1,0 +1,606 @@
+HW 07 Web Scraping, Excel, PDF, Word, JSON, CSV
+CH 12 Web Scraping
+Since so much work on a computer involves going on the internet, it’d be great if your programs could get online.
+Web scraping is the term for using a program to download and process content from the web.
+For example, Google runs many web scraping programs to index web pages for its search engine.
+In this chapter, you will learn about several modules that make it easy to scrape web pages in Python.
+
+- webbrowser Comes with Python and opens a browser to a specific page.
+- requests Downloads files and web pages from the internet.
+- bs4 Parses HTML, the format that web pages are written in.
+- selenium Launches and controls a web browser. The selenium module is able to fill in forms and simulate mouse clicks in this browser.
+
+# 1
+**mapIt.py with Webbrowswer Module**
+A web browser tab will open to the URL.
+This is about the only thing the webbrowser module can do.
+>>> import webbrowser
+>>> webbrowser.open('https://inventwithpython.com/')
+True
+>>>
+
+# 2 - mapIt.py
+**STEP 1: Figure out URL**
+ it’s tedious to copy a street address to the clipboard and bring up a map of it on Google Maps.
+the open() function can, for example, take a few steps out of this task by writing a simple script to automatically launch the map in your browser using the contents of your clipboard.
+This way, you only have to copy the address to a clipboard and run the script, and the map will be loaded for you.
+
+This is what your program does:
+- Gets a street address from the command line arguments or clipboard
+- Opens the web browser to the Google Maps page for the address
+
+This means your code will need to do the following:
+- Read the command line arguments from sys.argv.
+- Read the clipboard contents.
+- Call the webbrowser.open() function to open the web browser.
+
+the script will use the command line arguments instead of the clipboard.
+If there are no command line arguments, then the program will know to use the contents of the clipboard.
+
+First you need to figure out what URL to use for a given street address.
+
+# 3
+**STEP 2: Handle Command Line Arguments**
+After the program’s #! shebang line, you need to import the webbrowser module for launching the browser and import the sys module for reading the potential command line arguments.
+The sys.argv variable stores a list of the program’s filename and command line arguments.
+If this list has more than just the filename in it, then len(sys.argv) evaluates to an integer greater than 1, meaning that command line arguments have indeed been provided.
+
+Since sys.argv is a list of strings, you can pass it to the join() method, which returns a single string value.
+You don’t want the program name in this string, so instead of sys.argv, you should pass sys.argv[1:] to chop off the first element of the array.
+The final string that this expression evaluates to is stored in the address variable.
+
+# 4
+**STEP 3: Handle Clipboard Content and Launch Browser***
+
+# 5
+**Downloading Files from Web with Request Module**
+The requests module lets you easily download files from the web
+without having to worry about complicated issues such as network errors, connection problems, and data compression
+>>> import requests
+>>> requests.get('https://google.com')
+<Response [200]>
+>>>
+
+Save Lost variable in Python
+_ is whatever the last non null output was
+200 means successful
+>>> r = _
+>>> r
+<Response [200]>
+>>>
+
+Report code back from successful web service
+>>> r.status_code
+200
+>>>
+
+The content of r webpage in a binary string
+>>> r.content
+b'<!doctype html><html itemscope="" itemtype="http://schema.org/WebPage" lang="en"><head>...
+>>>
+
+Print not in binary code
+>>> print(r.content.decode())
+---------------------------------------------------------------------------
+UnicodeDecodeError                        Traceback (most recent call last)
+<ipython-input-7-f558298aa5d6> in <module>
+----> 1 print(r.content.decode())
+
+UnicodeDecodeError: 'utf-8' codec can't decode byte 0xa0 in position 11469: inva
+lid start byte
+>>>
+
+>>> print(r.content.decode('latin-1'))
+<!doctype html><html itemscope="" itemtype="http://schema.org/WebPage" lang="en"><head>
+
+# 6
+**Downloading Web Page with requests.get()**
+The requests.get() function takes a string of a URL to download.
+By calling type() on requests.get()’s return value, you can see that it returns
+a Response object, which contains the response that the web server gave for your request.
+
+The URL goes to a text web page for the entire play of Romeo and Juliet, provided on this book’s site
+>>> import requests
+>>> res = requests.get('https://automatetheboringstuff.com/files/rj.txt')
+>>> res
+<Response [200]>
+
+Response type
+>>> type(res)
+<class 'requests.models.Response'>
+
+This variable holds a large string of the entire play
+the call to len(res.text) shows you that it is more than 178,000 characters long
+>>> len(res.text)
+178978
+
+Finally, calling print(res.text[:250]) displays only the first 250 characters
+>>> print(res.text[:250])
+The Project Gutenberg EBook of Romeo and Juliet, by William Shakespeare
+
+This eBook is for the use of anyone anywhere at no cost and with
+almost no restrictions whatsoever.  You may copy it, give it away or
+re-use it under the terms of the Projec
+>>>
+
+# 7
+**Checking for Errors**
+the Response object has a status_code attribute that can be checked against requests.codes.ok
+(a variable that has the integer value 200) to see whether the download succeeded.
+
+A simpler way to check for success is to call the raise_for_status() method on the Response object.
+This will raise an exception if there was an error downloading the file and will do nothing if the download succeeded.
+
+404 is a page unreachable/nonexistant
+Ok attribute shows you got something other than a 200
+>>> res = requests.get('https://google.com/dfgrcthvjbkhhfrxd^Shjkzfhgjkut')
+>>> r
+<Response [404]>
+>>> r.ok
+False
+>>>
+
+The raise_for_status() method is a good way to ensure that a program halts if a bad download occurs.
+ You want your program to stop as soon as some unexpected error happens.
+
+>>> res = requests.get('https://inventwithpython.com/page_that_does_not_exist')
+>>> res.raise_for_status()
+---------------------------------------------------------------------------
+HTTPError                                 Traceback (most recent call last)
+<ipython-input-17-cd6be6b74546> in <module>
+----> 1 res.raise_for_status()
+
+c:\users\usapawn\appdata\local\programs\python\python38-32\lib\site-packages\req
+uests\models.py in raise_for_status(self)
+    939
+    940         if http_error_msg:
+--> 941             raise HTTPError(http_error_msg, response=self)
+    942
+    943     def close(self):
+
+HTTPError: 404 Client Error: Not Found for url: https://google.com/ujsghn%20cvkh
+lkfahjfgj,cifusis
+>>>
+
+# 8
+**Saving Downloaded Files to the Hard Drive**
+From here, you can save the web page to a file on your hard drive with the standard open() function and write() method.
+First, you must open the file in write binary mode by passing the string 'wb' as the second argument to open().
+Even if the page is in plaintext you need to write binary data instead of text data in order to maintain the Unicode encoding of the text.
+To write the web page to a file, you can use a for loop with the Response object’s iter_content() method.
+>>> res = requests.get('https://automatetheboringstuff.com/files/rj.txt')
+ import path
+ from pathlib import Path
+path = Path('RomeoAndJuliet.txt')
+
+In [24]: with path.open('wb') as wfp:
+    ...:     for chunk in res.iter_content(1000000):
+    ...:         wfp.write(chunk)
+    ...:
+
+Download file originally then write to file
+path.write_bytes(res.content)
+178978
+
+The write() method returns the number of bytes written to the file.
+In the previous example, there were 100,000 bytes in the first chunk, and the remaining part of the file needed only 78,981 bytes.
+
+To review, here’s the complete process for downloading and saving a file:
+1. Call requests.get() to download the file.
+2. Call open() with 'wb' to create a new file in write binary mode.
+3. Loop over the Response object’s iter_content() method.
+4. Call write() on each iteration to write the content to the file.
+5. Call close() to close the file.
+
+# 9
+**HTML**
+Hypertext Markup Language (HTML) is the format that web pages are written in.
+ An HTML file is a plaintext file with the .html file extension.
+ The text in these files is surrounded by tags, which are words enclosed in angle brackets.
+ The tags tell the browser how to format the web page.
+ A starting tag and closing tag can enclose some text to form an element.
+ The text (or inner HTML) is the content between the starting and closing tags.
+See index.html
+
+# 10
+**Parsing HTML w BS4 Module**
+Beautiful Soup is a module for extracting information from an HTML page
+(and is much better for this purpose than regular expressions).
+
+>>> import requests, bs4
+>>> res = requests.get('https://nostarch.com')
+>>> res
+<Response [200]>
+
+2nd Argument is what parser you are going to use
+>>> soup = bs4.BeautifulSoup(res.text, 'html.parser')
+>>> type(soup)
+<class 'bs4.BeautifulSoup'>
+
+Representation of the HTML object
+>>> soup
+<!DOCTYPE html>
+
+<html dir="ltr" lang="en">
+<head>
+<link href="https://www.w3.org/1999/xhtml/vocab"...
+>>>
+
+**Example.html**
+The bs4.BeautifulSoup() function needs to be called with a string containing the HTML it will parse.
+The bs4.BeautifulSoup() function returns a BeautifulSoup object.
+>>> import requests, bs4, path
+res = requests.get('https://nostarch.com')
+
+In [40]: res
+Out[40]: <Response [200]>
+
+In [41]: soup = bs4.BeautifulSoup(res.text, 'html.parser')
+
+In [42]: type(soup)
+Out[42]: bs4.BeautifulSoup
+
+In [43]: example = bs4.BeautifulSoup(Path('example.html').read_text(), 'html.parser'
+   ...: )
+
+   In [44]: example
+   Out[44]:
+   <!-- This is the example.html example file. the Beautiful Soup examples will parse (t
+   hat is, analyze and identify the parts of) an HTML file on the hard drive -->
+   <html><head><title>The Website Title</title></head>
+   <body>
+
+This code uses requests.get() to download the main page from the No Starch Press website
+and then passes the text attribute of the response to bs4.BeautifulSoup().
+The BeautifulSoup object that it returns is stored in a variable named noStarchSoup.
+
+You can also load an HTML file from your hard drive by passing a File object to bs4.BeautifulSoup()
+along with a second argument that tells Beautiful Soup which parser to use to analyze the HTML.
+
+# 11
+**Finding Element with select()**
+Run example.html
+soup.select('div')
+All elements named <div>
+
+soup.select('#author')
+The element with an id attribute of author
+
+soup.select('.notice')
+All elements that use a CSS class attribute named notice
+
+soup.select('div span')
+All elements named <span> that are within an element named <div>
+
+soup.select('div > span')
+All elements named <span> that are directly within an element named <div>, with no other element in between
+
+soup.select('input[name]')
+All elements named <input> that have a name attribute with any value
+
+soup.select('input[type="button"]')
+All elements named <input> that have an attribute named type with value button
+
+Result set of called author id
+In [57]: elem = example.select('#author')
+In [58]: elem
+Out[58]: [<span id="author">Al Sweigart</span>]
+
+Elements represented as paragraphs in file
+In [62]: p_tags = example.select('p')
+
+In [63]: p_tags
+Out[63]:
+[<p>Download my <strong>Python</strong> book from <a href="https://
+ inventwithpython.com">my website</a>.</p>,
+ <p class="slogan">Learn Python the easy way!</p>,
+ <p>By <span id="author">Al Sweigart</span></p>]
+
+ # 12
+ **Project: Open All Search Results**
+ Also do not scrape Google; they blacklist
+ This is what your program does:
+- Gets search keywords from the command line arguments
+- Retrieves the search results page
+- Opens a browser tab for each result
+
+This means your code will need to do the following:
+- Read the command line arguments from sys.argv.
+- Fetch the search result page with the requests module.
+- Find the links to each search result.
+- Call the webbrowser.open() function to open the web browser.
+
+**Step 1: Get Command Line Args and Requests Search Page**
+In [76]: !python searchpypi.py 'search'
+The given search terms: 'search'
+The URL is: https://pypi.org/search/?q='search'
+
+In [83]: import searchpypi
+
+In [84]: searchpypi.get_url('game engine')
+Out[84]: 'https://pypi.org/search/?q=game engine'
+
+In [85]: res = requests.get(searchpypi.get_url('game engine'))
+
+In [86]: res
+Out[86]: <Response [200]>
+
+**Step 2: Find ALL Results**
+Find the proper look up to select by Inspecting the item's html- we are looking
+for attributes that are apackage snippets
+In [88]: soup = bs4.BeautifulSoup(res.text, 'html.parser')
+
+In [89]: soup.select('a.package-snippet')
+
+The First result
+In [90]: soup.select('a.package-snippet')[1]
+Out[90]:
+<a class="package-snippet" href="/project/engine/">
+<h3 class="package-snippet__title">
+<span class="package-snippet__name">engine</span>
+<span class="package-snippet__version">0.6.0</span>
+</h3>
+<p class="package-snippet__description">Pure python extensible SQL database engine su
+pporting NULL values. Formally SnakeSQL.</p>
+</a>
+
+**Step 3: Open Web Browser for each Result**
+Use minimum function to get a maximum
+
+In [91]: anchor = soup.select('a.package-snippet')[0]
+
+In [92]: type(anchor)
+Out[92]: bs4.element.Tag
+
+Href is like a file system path; behaves like dictionary; combine path with server
+In [93]: anchor.attrs
+Out[93]: {'class': ['package-snippet'], 'href': '/project/game24/'}
+
+In [95]: anchor.get('href')
+Out[95]: '/project/game24/'
+
+In [95]: !head searchpypi.py
+#!/usr/bin/env python3
+'''searchpypi.py - Opens several serach results from pypi.org
+'''
+# Built-in Mods
+import sys
+import argparse
+...
+
+In [105]: !python searchpypi.py -n 2 'game_engine'
+The given search terms: 'game_engine'
+The URL is: https://pypi.org/search/?q='game_engine'
+Found 0 projects to open.
+     ... opening 0
+
+# 13
+**Starting a selenium- Controlled Browser**
+Tells a browser to go to a page, load html, run Javascript, then read content of page from browser's perspective
+After installing the geckodriver, run this and it opens firefox broswer with striping
+In [120]: browser = webdriver.Firefox()
+
+Robot = Web browser is controlled by programmer
+Opens up the webpage automatically
+In [123]: browser.get('https://inventwithpython.com')
+
+# 14
+**Finding Elements on the Page**
+WebDriver objects have quite a few methods for finding elements on a page.
+They are divided into the find_element_* and find_elements_* methods.
+
+The find_element_* methods return a single WebElement object, representing the first element on the page that matches your query.
+The find_elements_* methods return a list of WebElement_* objects for every matching element on the page.
+
+browser.find_element_by_class_name(name)
+browser.find_elements_by_class_name(name)
+Elements that use the CSS
+class name
+
+browser.find_element_by_css_selector(selector)
+browser.find_elements_by_css_selector(selector)
+Elements that match the CSS
+selector
+
+browser.find_element_by_id(id)
+browser.find_elements_by_id(id)
+Elements with a matching id
+attribute value
+
+browser.find_element_by_link_text(text)
+browser.find_elements_by_link_text(text)
+<a> elements that completely
+match the text provided
+
+browser.find_element_by_partial_link_text(text)
+browser.find_elements_by_partial_link_text(text)
+<a> elements that contain the
+text provided
+
+browser.find_element_by_name(name)
+browser.find_elements_by_name(name)
+Elements with a matching name
+attribute value
+
+browser.find_element_by_tag_name(name)
+browser.find_elements_by_tag_name(name)
+Elements with a matching tag name
+(case-insensitive; an <a> element is
+matched by 'a' and 'A')
+
+Once you have the WebElement object, you can find out more about it by reading
+the attributes or calling the methods
+
+tag_name
+The tag name, such as 'a' for an <a> element
+
+get_attribute(name)
+The value for the element’s name attribute
+
+text
+The text within the element, such as 'hello' in <span>hello </span>
+
+clear()
+For text field or text area elements, clears the text typed into it
+
+is_displayed()
+Returns True if the element is visible; otherwise returns False
+
+is_enabled()
+For input elements, returns True if the element is enabled; otherwise returns False
+
+is_selected()
+For checkbox or radio button elements, returns True if the element is selected; otherwise returns False
+
+location
+A dictionary with keys 'x' and 'y' for the position of the element in the page
+
+# 15
+**Sending special keys**
+The selenium module has a module for keyboard keys that are impossible to type into a string value, which function much like escape characters.
+These values are stored in attributes in the selenium.webdriver.common.keys module.
+Since that is such a long module name, it’s much easier to run from selenium.webdriver.common.keys import Keys at the top of your program;
+if you do, then you can simply write Keys anywhere you’d normally have to write selenium.webdriver.common.keys.
+
+Keys.DOWN, Keys.UP, Keys.LEFT, Keys.RIGHT
+The keyboard arrow keys
+
+Keys.ENTER, Keys.RETURN
+The ENTER and RETURN keys
+
+Keys.HOME, Keys.END, Keys.PAGE_DOWN, Keys.PAGE_UP
+The HOME, END, PAGEDOWN, and PAGEUP keys
+
+Keys.ESCAPE, Keys.BACK_SPACE, Keys.DELETE
+The ESC, BACKSPACE, and DELETE keys
+
+Keys.F1, Keys.F2, . . . , Keys.F12
+The F1 to F12 keys at the top of the keyboard
+
+Keys.TAB
+The TAB key
+
+# 16
+**Maze.py**
+Send robot browser to webpage
+In [123]: browser.get('https://inventwithpython.com')
+
+In [124]: browser = webdriver.Firefox()
+
+In [125]: browser.get('https://www.goshdarngames.com/games-page-files/amaze/html5-ma
+     ...: ze/index.html')
+
+To send keyboard event, get underlying html document. Find it by tag name, call it html, then send.
+Whatever key direction, corresponds to directio object or pointer should go
+In [126]: html = browser.find_element_by_tag_name('html')
+
+In [127]: html
+Out[127]: <selenium.webdriver.firefox.webelement.FirefoxWebElement (session="cac6fb1a
+-7d7e-4ae6-85c7-2a5562c77128", element="489dee8f-b0f0-4f17-b474-8ef5c7db5458")>
+
+In [128]: from selenium.webdriver.common.keys import Keys
+
+In [129]: html.send_keys(Keys.DOWN)
+
+To randomly move, make a list of all possible directions. Then use choice in random module
+In [131]: import random
+
+In [132]: random.choice([1, 2, 3, 4])
+Out[132]: 4
+
+In [133]: keys = [Keys.UP, Keys.DOWN, Keys.LEFT, Keys.RIGHT]
+
+In [134]: random.choice(keys)
+Out[134]: '\ue014'
+
+In [135]: random.choice(keys)
+Out[135]: '\ue015'
+
+In [136]: random.choice(keys)
+Out[136]: '\ue015'
+
+In [137]: random.choice(keys)
+Out[137]: '\ue014'
+
+Sends object in directions possible. If not able to go left, it stays put
+In [138]: html
+Out[138]: <selenium.webdriver.firefox.webelement.FirefoxWebElement (session="cac6fb1a
+-7d7e-4ae6-85c7-2a5562c77128", element="489dee8f-b0f0-4f17-b474-8ef5c7db5458")>
+
+In [139]: html.send_keys(random.choice(keys))
+
+In [140]: html.send_keys(random.choice(keys))
+
+In [141]: html.send_keys(random.choice(keys))
+
+In [142]: html.send_keys(random.choice(keys))
+
+Continue executing command until the end is reached through while loop
+In [144]: while True:
+     ...:     html.send_keys(random.choice(keys))
+     ...:
+An error appears when you win due to loop not being able to continue
+---------------------------------------------------------------------------
+UnexpectedAlertPresentException           Traceback (most recent call last)
+<ipython-input-144-8fcd806c7fb3> in <module>
+      1 while True:
+----> 2     html.send_keys(random.choice(keys))
+      3
+
+c:\users\usapawn\appdata\local\programs\python\python38-32\lib\site-packages\selenium
+\webdriver\remote\webelement.py in send_keys(self, *value)
+    475                 value = self._upload(local_file)
+    476
+--> 477         self._execute(Command.SEND_KEYS_TO_ELEMENT,
+    478                       {'text': "".join(keys_to_typing(value)),
+    479                        'value': keys_to_typing(value)})
+
+c:\users\usapawn\appdata\local\programs\python\python38-32\lib\site-packages\selenium
+\webdriver\remote\webelement.py in _execute(self, command, params)
+    631             params = {}
+    632         params['id'] = self._id
+--> 633         return self._parent.execute(command, params)
+    634
+    635     def find_element(self, by=By.ID, value=None):
+
+c:\users\usapawn\appdata\local\programs\python\python38-32\lib\site-packages\selenium
+\webdriver\remote\webdriver.py in execute(self, driver_command, params)
+    319         response = self.command_executor.execute(driver_command, params)
+    320         if response:
+--> 321             self.error_handler.check_response(response)
+    322             response['value'] = self._unwrap_value(
+    323                 response.get('value', None))
+
+c:\users\usapawn\appdata\local\programs\python\python38-32\lib\site-packages\selenium
+\webdriver\remote\errorhandler.py in check_response(self, response)
+    239             elif 'alert' in value:
+    240                 alert_text = value['alert'].get('text')
+--> 241             raise exception_class(message, screen, stacktrace, alert_text)
+    242         raise exception_class(message, screen, stacktrace)
+    243
+
+UnexpectedAlertPresentException: Alert Text: None
+Message: Dismissed user prompt dialog: You are the maze master!
+
+Full program executable to continue moving about for a time of 30 seconds.
+If you have not reached the end in that time, the cursor/object will stop due to over time.
+Window pops up to screen, then starts. Even when stopped, page is still visible.
+In [145]: !chmod +x maze.py
+
+In [147]: !python maze.py
+OVER TIME!!!!
+
+Kill the browser
+In [149]: browser.quit()
+
+# 17
+**Clicking Browser Buttons**
+The selenium module can simulate clicks on various browser buttons as well through the following methods:
+
+browser.back() Clicks the Back button.
+
+browser.forward() Clicks the Forward button.
+
+browser.refresh() Clicks the Refresh/Reload button.
+
+browser.quit() Clicks the Close Window button.

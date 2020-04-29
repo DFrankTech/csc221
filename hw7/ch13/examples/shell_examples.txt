@@ -1,0 +1,276 @@
+HW 07 Web Scraping, Excel, PDF, Word, JSON, CSV
+CH 13 Working With Excel Spreadsheets
+
+# 1
+**Excel Documents**
+an Excel spreadsheet document is called a workbook
+A single workbook is saved in a file with the .xlsx extension.
+Each workbook can contain multiple sheets (also called worksheets).
+The sheet the user is currently viewing (or last viewed before closing Excel) is called the active sheet.
+
+Each sheet has columns (addressed by letters starting at A) and rows (addressed by numbers starting at 1).
+A box at a particular column and row is called a cell.
+Each cell can contain a number or text value. The grid of cells with data makes up a sheet.
+
+# 2
+**Reading and Opening Excel Documents w/ OpenPyXL**
+See example.xlsx file
+The openpyxl.load_workbook() function takes in the filename and returns a value of the workbook data type.
+This Workbook object represents the Excel file, a bit like how a File object represents an opened text file.
+
+Remember that example.xlsx needs to be in the current working directory in order for you to work with it.
+
+In [1]: import openpyxl
+
+In [4]: wb = openpyxl.load_workbook('example.xlsx')
+
+In [5]: type(wb)
+Out[5]: openpyxl.workbook.workbook.Workbook
+
+# 3
+**Getting sheets from Workbook**
+You can get a list of all the sheet names in the workbook by accessing the sheetnames attribute
+Each sheet is represented by a Worksheet object, which you can obtain by using the square brackets with the sheet name string like a dictionary key
+In [12]: wb.sheetnames
+Out[12]: ['Sheet1', 'Sheet2', 'Sheet3']
+
+In [13]: class X:
+    ...:     def __init__(self):
+    ...:         self.x = 1
+    ...:         self.y = 2
+    ...:     #property
+    ...:     def z(self):
+    ...:         return self.x + self.y
+    ...:
+
+In [14]: x = X()
+
+In [15]: x.x
+Out[15]: 1
+
+In [16]: x.y
+Out[16]: 2
+
+In [17]: x.z
+Out[17]: <bound method X.z of <__main__.X object at 0x05C0EEE0>>
+
+In [18]: x.y
+Out[18]: 2
+
+In [19]: x.y = 10
+
+In [20]: x.z
+Out[20]: <bound method X.z of <__main__.X object at 0x05C0EEE0>>
+
+Once you have the Worksheet object, you can get its name from the title attribute.
+In [21]: wb['Sheet1']
+Out[21]: <Worksheet "Sheet1">
+
+In [22]: sheet = wb['Sheet1']
+
+In [23]: sheet.title
+Out[23]: 'Sheet1'
+
+Finally, you can use the active attribute of a Workbook object to get the workbook’s active sheet.
+The active sheet is the sheet that’s on top when the workbook is opened in Excel.
+In [24]: wb.active
+Out[24]: <Worksheet "Sheet1">
+
+# 4
+**Getting Cells from Sheets
+Once you have a Worksheet object, you can access a Cell object by its name
+In [37]: sheet
+Out[37]: <Worksheet "Sheet1">
+
+The Cell object has a value attribute that contains the value stored in that cell.
+In [39]: sheet['A1']
+Out[39]: <Cell 'Sheet1'.A1>
+
+In [40]: sheet['A0']
+Out[40]:
+(<Cell 'Sheet1'.A1>,
+ <Cell 'Sheet1'.A2>,
+ <Cell 'Sheet1'.A3>,
+ <Cell 'Sheet1'.A4>,
+ <Cell 'Sheet1'.A5>,
+ <Cell 'Sheet1'.A6>,
+ <Cell 'Sheet1'.A7>)
+
+Example: recognizes this info as a date and timestamp and represents it as a python object
+You can even do equations with cell data
+In [43]: sheet['A1'].value
+Out[43]: datetime.datetime(2015, 4, 5, 13, 34, 2)
+
+In [44]: sheet['A1'].value - sheet['A2'].value
+Out[44]: datetime.timedelta(days=-3653, seconds=35559)
+* difference in seperate times in seconds
+
+Cell objects also have row, column, and coordinate attributes that provide location information for the cell.
+Cells populating column 'A'
+ In [41]: sheet['A']
+ Out[41]:
+ (<Cell 'Sheet1'.A1>,
+  <Cell 'Sheet1'.A2>,
+  <Cell 'Sheet1'.A3>,
+  <Cell 'Sheet1'.A4>,
+  <Cell 'Sheet1'.A5>,
+  <Cell 'Sheet1'.A6>,
+  <Cell 'Sheet1'.A7>)
+
+In [45]: cell = sheet['A1']
+
+In [46]: cell.row
+Out[46]: 1
+
+In [47]: cell.column
+Out[47]: 1
+
+In [48]: cell.value
+Out[48]: datetime.datetime(2015, 4, 5, 13, 34, 2)
+
+Using the sheet’s cell() method and passing it row=1 and column=2 gets you a Cell object for cell B1, just like specifying sheet['B1'] did.
+Then, using the cell() method and its keyword arguments, you can write a for loop to print the values of a series of cells.
+In [49]: sheet.cell(row=1, column=2)
+Out[49]: <Cell 'Sheet1'.B1>
+
+Say you want to go down column B and print the value in every cell with an odd row number.
+By passing 2 for the range() function’s “step” parameter, you can get cells from every second row (in this case, all the odd-numbered rows).
+The for loop’s i variable is passed for the row keyword argument to the cell() method, while 2 is always passed for the column keyword argument.
+Note that the integer 2, not the string 'B', is passed.
+In [53]: for i in range(1, 8, 2):
+    ...:     print(i, sheet.cell(row=i, column=2).value)
+    ...:
+    ...:
+    ...:
+1 Apples
+3 Pears
+5 Apples
+7 Strawberries
+
+You can determine the size of the sheet with the Worksheet object’s max_row and max_column attributes
+This is including columns and rows with actual data on them
+In [61]: sheet.max_column
+Out[61]: 3
+
+In [62]: sheet.max_row
+Out[62]: 7
+
+# 5
+**Converting Between Column Letters and Number**
+To convert from letters to numbers, call the openpyxl.utils.column_index_from_string() function
+To convert from numbers to letters, call the openpyxl.utils.get_column_letter() function.
+In [63]: from openpyxl.utils import get_column_letter, column_index_from_string
+    ...:
+
+In [64]: get_column_letter(sheet.max_column)
+Out[64]: 'C'
+
+In [65]: get_column_letter(257)
+Out[65]: 'IW'
+
+# 6
+**Getting Rows and Columns from the Sheets**
+You can slice Worksheet objects to get all the Cell objects in a row, column, or rectangular area of the spreadsheet
+Then you can loop over all the cells in the slice.
+In [66]: for row in sheet['A1': 'C3']:
+    ...:     print(row)
+    ...:
+(<Cell 'Sheet1'.A1>, <Cell 'Sheet1'.B1>, <Cell 'Sheet1'.C1>)
+(<Cell 'Sheet1'.A2>, <Cell 'Sheet1'.B2>, <Cell 'Sheet1'.C2>)
+(<Cell 'Sheet1'.A3>, <Cell 'Sheet1'.B3>, <Cell 'Sheet1'.C3>)
+
+In [68]: for col in sheet.columns:
+    ...:     print(col)
+    ...:
+(<Cell 'Sheet1'.A1>, <Cell 'Sheet1'.A2>, <Cell 'Sheet1'.A3>, <Cell 'Sheet1'.A4>,
+ <Cell 'Sheet1'.A5>, <Cell 'Sheet1'.A6>, <Cell 'Sheet1'.A7>)
+(<Cell 'Sheet1'.B1>, <Cell 'Sheet1'.B2>, <Cell 'Sheet1'.B3>, <Cell 'Sheet1'.B4>,
+ <Cell 'Sheet1'.B5>, <Cell 'Sheet1'.B6>, <Cell 'Sheet1'.B7>)
+(<Cell 'Sheet1'.C1>, <Cell 'Sheet1'.C2>, <Cell 'Sheet1'.C3>, <Cell 'Sheet1'.C4>,
+ <Cell 'Sheet1'.C5>, <Cell 'Sheet1'.C6>, <Cell 'Sheet1'.C7>)
+
+# 7
+**Project: Reading Data from a Spreadsheet**
+In [73]: %load_ext autoreload
+
+In [74]: %autoreload 2
+
+In [75]: import census
+
+In [76]: sheet = census.get_census_sheet('censuspopdata.xlsx')
+
+In [77]: data = census.get_county_data(sheet)
+
+In [79]: len(data)
+Out[79]: 51
+
+In [81]: data.keys()
+Out[81]: dict_keys(['AL', 'AK', 'AZ', 'AR', 'CA', 'CO', 'CT', 'DE', 'DC', 'FL',
+'GA', 'HI', 'ID', 'IL', 'IN', 'IA', 'KS', 'KY', 'LA', 'ME', 'MD', 'MA', 'MI', 'M
+N', 'MS', 'MO', 'MT', 'NE', 'NV', 'NH', 'NJ', 'NM', 'NY', 'NC', 'ND', 'OH', 'OK'
+, 'OR', 'PA', 'RI', 'SC', 'SD', 'TN', 'TX', 'UT', 'VT', 'VA', 'WA', 'WV', 'WI',
+'WY'])
+
+In [84]: pprint.pprint(list(range(20)))
+[0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19]
+
+In [88]: !chmod +x census.py
+
+In [93]: !python census.py censuspopdata.xlsx
+INFO:root:Loading Excel workbook: censuspopdata.xlsx
+INFO:root:Reading rows...
+INFO:root:Writing out census python module: census2010.py
+
+In [103]: !cat census2010.py |less
+data = {'AK': {'Aleutians East': {'pop': 3141, 'tracts': 1},
+        'Aleutians West': {'pop': 5561, 'tracts': 2},
+
+In [105]: import census2010
+
+# 8
+**Writing Excel Documents
+
+# 9
+**Project: Updating a Spreadsheet**
+
+In [117]: import update_produce
+
+In [118]: sheet = update_produce.get_data_sheet('produceSales.xlsx')
+
+In [119]: sheet
+Out[119]: <Worksheet "Sheet">
+
+In [120]: sheet.max_row
+Out[120]: 23758
+
+In [130]: sheet[sheet.max_row - 1][0].value
+Out[130]: 'Potatoes'
+
+In [131]: sheet[sheet.max_row][0].value
+Out[131]: 'Red onion'
+
+In [132]: sheet[sheet.max_row]
+Out[132]:
+(<Cell 'Sheet'.A23758>,
+ <Cell 'Sheet'.B23758>,
+ <Cell 'Sheet'.C23758>,
+ <Cell 'Sheet'.D23758>)
+
+In [126]: from datetime import datetime
+
+In [127]: now = datetime.now()
+
+In [128]: now
+Out[128]: datetime.datetime(2020, 4, 8, 19, 22, 20, 896324)
+
+In [129]: now.strftime('%Y-%m-%d %H%M%S')
+Out[129]: '2020-04-08 192220'
+
+In [137]: !chmod +x update_produce.py
+
+In [138]: !update_produce.py produceSales.xlsx
+DEBUG:root:{'Celery': 1.19, 'Garlic': 3.07, 'Lemon': 1.27}
+DEBUG:root:Garlic
+DEBUG:root:Celery
+DEBUG:root:Garlic
+DEBUG:root:Celery

@@ -1,0 +1,8 @@
+
+Output
+$ python coinToss.py
+Guess the coin toss! Enter heads or tails:
+heads
+Nope! Guess again!
+heads
+Nope. You are really bad at this game.
