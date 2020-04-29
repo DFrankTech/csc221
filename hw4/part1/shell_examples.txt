@@ -1,0 +1,16 @@
+HW 06: Manipulating strings
+#1 Regular strings
+>>> print("Hello there!\nHow are you?\nI\'m doing fine.")
+Hello there!
+How are you?
+I'm doing fine.
+>>>
+
+#2 Raw strings
+Ignores escape characters
+>>> print(r'That is Carol\'s cat.')
+That is Carol\'s cat.
+>>>
+
+# 3 Multiline strings with Triple Quotes
+\n- new line
